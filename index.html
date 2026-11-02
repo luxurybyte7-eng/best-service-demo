@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <title>Best Service — AI WhatsApp Lead Bot Demo</title>
 <meta name="description" content="Try a free AI WhatsApp-style lead & FAQ chatbot for Indian SMBs. Built by Best Service." />
 <style>
@@ -22,11 +22,13 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: linear-gradient(160deg, #0b141a 0%, #1a3a32 40%, #0b141a 100%);
     min-height: 100vh;
+    min-height: 100dvh;
     color: var(--ink);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 16px;
+    padding: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   .topbar {
     width: 100%;
@@ -44,8 +46,9 @@
     width: 40px; height: 40px; border-radius: 12px;
     background: linear-gradient(135deg, var(--accent), var(--wa-teal));
     display: grid; place-items: center; font-weight: 800; color: #062; font-size: 14px;
+    flex-shrink: 0;
   }
-  .brand h1 { font-size: 1.1rem; font-weight: 700; }
+  .brand h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.25; }
   .brand p { font-size: 0.78rem; opacity: 0.75; }
   .pill {
     background: rgba(37,211,102,.15);
@@ -62,9 +65,13 @@
     grid-template-columns: 280px 1fr;
     gap: 14px;
     min-height: 640px;
+    flex: 1;
   }
   @media (max-width: 800px) {
     .layout { grid-template-columns: 1fr; min-height: auto; }
+    .sidebar { order: 2; }
+    .phone { order: 1; min-height: 70vh; max-height: none; }
+    .messages { min-height: 50vh; }
   }
   .sidebar, .phone {
     background: var(--white);
@@ -112,11 +119,13 @@
     color: #fff;
     padding: 12px 14px;
     display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
   }
   .avatar {
     width: 42px; height: 42px; border-radius: 50%;
     background: #fff; color: var(--wa-green);
     display: grid; place-items: center; font-weight: 800; font-size: 0.85rem;
+    flex-shrink: 0;
   }
   .wa-header .title { font-weight: 700; font-size: 0.98rem; }
   .wa-header .status { font-size: 0.72rem; opacity: .85; }
@@ -129,15 +138,17 @@
     flex-direction: column;
     gap: 8px;
     min-height: 420px;
+    -webkit-overflow-scrolling: touch;
   }
   .bubble {
-    max-width: 82%;
+    max-width: 85%;
     padding: 8px 10px;
     border-radius: 8px;
     font-size: 0.92rem;
     line-height: 1.4;
     white-space: pre-wrap;
     word-wrap: break-word;
+    overflow-wrap: anywhere;
     position: relative;
     box-shadow: 0 1px 0.5px rgba(0,0,0,.08);
   }
@@ -146,18 +157,40 @@
   .bubble .time {
     display: block; text-align: right; font-size: 0.65rem; color: var(--muted); margin-top: 4px;
   }
+  .typing {
+    align-self: flex-start;
+    background: #fff;
+    border-radius: 8px;
+    border-top-left-radius: 0;
+    padding: 10px 14px;
+    display: flex; gap: 4px; align-items: center;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,.08);
+  }
+  .typing span {
+    width: 7px; height: 7px; border-radius: 50%; background: #90a4ae;
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink {
+    0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-2px); }
+  }
   .composer {
     display: flex; gap: 8px; padding: 10px; background: var(--wa-panel); align-items: center;
+    flex-shrink: 0;
   }
   .composer input {
     flex: 1; border: none; border-radius: 22px; padding: 12px 16px;
-    font-size: 0.95rem; outline: none; background: #fff;
+    font-size: 16px; outline: none; background: #fff; /* 16px avoids iOS zoom */
   }
   .composer button {
     border: none; background: var(--wa-teal); color: #fff;
     width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.1rem;
+    flex-shrink: 0;
   }
   .composer button:hover { background: var(--wa-green); }
+  .composer button:disabled { opacity: .5; cursor: wait; }
   .footer {
     width: 100%; max-width: 920px; margin-top: 14px;
     color: #aebac1; font-size: 0.75rem; text-align: center; line-height: 1.5;
@@ -187,15 +220,15 @@
   <div class="layout">
     <aside class="sidebar">
       <h2>Sample businesses</h2>
-      <button class="biz active" data-biz="hotel" id="biz-hotel">
+      <button class="biz active" data-biz="hotel" id="biz-hotel" type="button">
         <div class="name">🏨 Royal City Guest House</div>
         <div class="meta">Guest house · rooms · tariffs · booking</div>
       </button>
-      <button class="biz" data-biz="realty" id="biz-realty">
+      <button class="biz" data-biz="realty" id="biz-realty" type="button">
         <div class="name">🏠 PropertyNest Realty</div>
         <div class="meta">Real estate · Patna · site visits</div>
       </button>
-      <button class="biz" data-biz="clinic" id="biz-clinic">
+      <button class="biz" data-biz="clinic" id="biz-clinic" type="button">
         <div class="name">🦷 SmileCare Dental</div>
         <div class="meta">Clinic · appointments · FAQs</div>
       </button>
@@ -220,17 +253,17 @@
           <div class="status" id="headerStatus">online · AI assistant by Best Service</div>
         </div>
       </div>
-      <div class="messages" id="messages"></div>
+      <div class="messages" id="messages" role="log" aria-live="polite"></div>
       <form class="composer" id="form">
-        <input id="input" autocomplete="off" placeholder="Type a message… / हिंदी में लिखें" />
-        <button type="submit" title="Send">➤</button>
+        <input id="input" autocomplete="off" enterkeyhint="send" placeholder="Type a message… / हिंदी में लिखें" />
+        <button type="submit" id="sendBtn" title="Send" aria-label="Send">➤</button>
       </form>
     </section>
   </div>
 
   <div class="footer">
-    Demo by <strong>Best Service</strong> — AI agents for Indian guest houses, hotels, brokers, clinics & freelancers.<br/>
-    Want this on your WhatsApp? Message us for a free demo · 50% advance · ₹5k–15k per agent
+    Demo by <strong>Best Service</strong> — AI agents for Indian guest houses, hotels, brokers, clinics &amp; freelancers.<br/>
+    Want this on your WhatsApp? Message us for a free custom demo · 50% advance · ₹5k–15k per agent
   </div>
 
 <script>
@@ -240,28 +273,28 @@ const BUSINESSES = {
     name: "PropertyNest Realty",
     short: "PN",
     city: "Patna",
-    greeting_en: "Namaste! 👋 Main PropertyNest Realty ka AI assistant hoon (by Best Service).\nAap site visit book kar sakte ho, budget pooch sakte ho, ya apna requirement bata sakte ho.\nKaise help karun?",
+    greeting_en: "Namaste! 👋 Main PropertyNest Realty ka AI assistant hoon (by Best Service).\nAap site visit book kar sakte ho, budget / EMI pooch sakte ho, ya apna requirement bata sakte ho.\nKaise help karun?",
     chips: ["2BHK under 50 lakh", "Site visit book karo", "EMI options?", "Location?"],
     faqs: [
-      {k:["price","budget","rate","cost","kitna","price list","lakh","crore"], a:{
-        en:"Humare paas 2BHK ~₹35–55L aur 3BHK ~₹55–90L options hain (Patna / Danapur / Bailey Road). Budget batao, matching list bhejta hoon.",
-        hi:"हमारे पास 2BHK लगभग ₹35–55 लाख और 3BHK ₹55–90 लाख के विकल्प हैं। बजट बताइए, लिस्ट भेजता हूँ।"
+      {k:["price","budget","rate","cost","kitna","price list","lakh","crore","किराया","दाम","कीमत","बजट","लाख","कितना"], a:{
+        en:"Patna me abhi popular options:\n• 2BHK — roughly ₹35–55 lakh\n• 3BHK — roughly ₹55–90 lakh\nAreas: Bailey Road, Danapur, Kankarbagh, Rupaspur.\nApna budget + BHK batao — matching shortlist bhejta hoon.",
+        hi:"पटना में अभी:\n• 2BHK — लगभग ₹35–55 लाख\n• 3BHK — लगभग ₹55–90 लाख\nएरिया: बेली रोड, दानापुर, कंकरबाग, रूपसपुर।\nबजट और BHK बताइए — शॉर्टलिस्ट भेजता हूँ।"
       }},
-      {k:["visit","site","dekh","dekhe","inspection","come"], a:{
-        en:"Site visit free hai! Naam, phone aur preferred time share karo — team confirm karke callback karegi.",
-        hi:"साइट विज़िट फ्री है! नाम, फ़ोन और समय बताइए — टीम कन्फ़र्म करके कॉल करेगी।"
+      {k:["visit","site","dekh","dekhe","inspection","come","साइट","विजिट","देख"], a:{
+        en:"Site visit bilkul free hai ✅\nPreferred day/time + naam & phone do — relationship manager confirm karke call/WhatsApp karega.",
+        hi:"साइट विज़िट फ्री है ✅ दिन/समय + नाम व फ़ोन बताइए — मैनेजर कन्फ़र्म करके कॉल/व्हाट्सऐप करेगा।"
       }},
-      {k:["location","kahan","where","address","area","danapur","bailey","kankarbagh"], a:{
-        en:"Projects mainly Bailey Road, Danapur, Kankarbagh & Rupaspur. Kaunsa area prefer karoge?",
+      {k:["location","kahan","where","address","area","danapur","bailey","kankarbagh","पता","कहाँ","कहां","एरिया","लोकेशन"], a:{
+        en:"Projects mainly Bailey Road, Danapur, Kankarbagh & Rupaspur. Kaunsa area prefer karoge — main matching inventory nikaalta hoon.",
         hi:"प्रोजेक्ट मुख्यतः बेली रोड, दानापुर, कंकरबाग और रूपसपुर में हैं। कौन सा एरिया चाहिए?"
       }},
-      {k:["emi","loan","bank","finance","home loan"], a:{
-        en:"Bank loan / EMI assistance available (SBI, HDFC, Axis partners). Salary slip ke saath pre-check karwa sakte ho.",
-        hi:"बैंक लोन/EMI सहायता उपलब्ध है। सैलरी स्लिप के साथ प्री-चेक करवा सकते हैं।"
+      {k:["emi","loan","bank","finance","home loan","किस्त","लोन","ऋण"], a:{
+        en:"Home loan / EMI help available (SBI, HDFC, Axis partners).\nSalary slip + PAN se rough eligibility check karwa sakte ho. Monthly budget batao?",
+        hi:"होम लोन/EMI सहायता उपलब्ध है (SBI, HDFC, Axis)। सैलरी स्लिप के साथ प्री-चेक हो सकता है।"
       }},
-      {k:["timing","hours","open","kab","time","office"], a:{
-        en:"Office: Mon–Sat 10:00 AM – 7:00 PM IST. Sunday visits by appointment.",
-        hi:"ऑफिस: सोम–शनि 10:00 AM – 7:00 PM। रविवार अपॉइंटमेंट पर।"
+      {k:["timing","hours","open","office hours","office time","ऑफिस समय"], a:{
+        en:"Office: Mon–Sat 10:00 AM – 7:00 PM IST. Sunday visits by appointment only.",
+        hi:"ऑफिस: सोम–शनि 10:00 AM – 7:00 PM। रविवार केवल अपॉइंटमेंट पर।"
       }},
     ],
     leadPrompt: {
@@ -276,28 +309,28 @@ const BUSINESSES = {
     name: "SmileCare Dental",
     short: "SC",
     city: "Patna",
-    greeting_en: "Namaste! 🦷 SmileCare Dental ka AI assistant (Best Service).\nAppointment, prices, ya treatment FAQ — sab yahin. Kaise help karun?",
+    greeting_en: "Namaste! 🦷 SmileCare Dental ka AI assistant (Best Service).\nAppointment, prices, treatments, emergency pain — sab yahin. Hindi / English / Hinglish OK.\nKaise help karun?",
     chips: ["Cleaning kitne ka?", "Appointment chahiye", "Tooth pain", "Timing?"],
     faqs: [
-      {k:["price","cost","fees","charge","kitna","cleaning","scaling"], a:{
-        en:"Cleaning/scaling ≈ ₹800–1,500. Filling ≈ ₹1,000–2,500. Root canal ≈ ₹4,000–8,000 (tooth pe depend). Exact quote checkup ke baad.",
-        hi:"क्लीनिंग ≈ ₹800–1,500। फिलिंग ≈ ₹1,000–2,500। रूट कैनाल ≈ ₹4,000–8,000।"
+      {k:["price","cost","fees","charge","kitna","cleaning","scaling","filling","rct","root canal","दाम","कीमत","कितना","क्लीनिंग","स्केलिंग","फिलिंग"], a:{
+        en:"Approx clinic rates (final after checkup):\n• Cleaning / scaling — ₹800–1,500\n• Filling — ₹1,000–2,500\n• Root canal — ₹4,000–8,000 (tooth pe depend)\nKonsa treatment poochna hai?",
+        hi:"लगभग रेट (चेकअप के बाद फाइनल):\n• क्लीनिंग/स्केलिंग — ₹800–1,500\n• फिलिंग — ₹1,000–2,500\n• रूट कैनाल — ₹4,000–8,000"
       }},
-      {k:["appoint","book","slot","visit","aana","consultation"], a:{
-        en:"Appointment ke liye naam, phone aur preferred time do — confirm karke message bhejenge.",
-        hi:"अपॉइंटमेंट के लिए नाम, फ़ोन और समय बताइए।"
+      {k:["appoint","appointment","book","slot","visit","aana","consultation","अपॉइंटमेंट","अपॉइंटमेन्ट","बुक"], a:{
+        en:"Appointment ke liye naam, phone aur preferred time do — front desk confirm karke message bhejegi.",
+        hi:"अपॉइंटमेंट के लिए नाम, फ़ोन और पसंदीदा समय बताइए — कन्फ़र्म मैसेज आएगा।"
       }},
-      {k:["pain","dard","swelling","emergency","urgent","blood"], a:{
-        en:"Pain/swelling me aaj same-day emergency slot try karte hain (10 AM–1 PM, 5–8 PM). Symptom short me batao.",
-        hi:"दर्द/सूजन में आज सेम-डे इमरजेंसी स्लॉट try करते हैं। लक्षण बताइए।"
+      {k:["pain","dard","swelling","emergency","urgent","blood","toothache","suujan","दर्द","सूजन","इमरजेंसी","दांत"], a:{
+        en:"Tooth pain / swelling? Same-day emergency slots try karte hain (10 AM–1 PM & 5–8 PM).\nSymptom short me batao — ice pack + painkiller temporary help, lekin checkup zaroori hai.",
+        hi:"दर्द/सूजन में आज सेम-डे इमरजेंसी स्लॉट try करते हैं (10–1, 5–8)। लक्षण बताइए।"
       }},
-      {k:["timing","hours","open","kab","time","sunday"], a:{
+      {k:["timing","hours","open","sunday","clinic time","समय","खुला","रविवार"], a:{
         en:"Mon–Sat 10:00 AM – 8:00 PM IST. Sunday 10:00 AM – 1:00 PM (emergency only).",
-        hi:"सोम–शनि 10 AM–8 PM। रविवार 10 AM–1 PM (इमरजेंसी)।"
+        hi:"सोम–शनि 10 AM–8 PM। रविवार 10 AM–1 PM (केवल इमरजेंसी)।"
       }},
-      {k:["location","address","kahan","where","map"], a:{
-        en:"SmileCare Dental — Boring Road, near RPS More, Patna. Parking available.",
-        hi:"स्माइलकेयर डेंटल — बोरिंग रोड, आरपीएस मोड़ के पास, पटना।"
+      {k:["location","address","kahan","where","map","पता","कहाँ","कहां","लोकेशन","मैप"], a:{
+        en:"SmileCare Dental — Boring Road, near RPS More, Patna. Two-wheeler + car parking available.",
+        hi:"स्माइलकेयर डेंटल — बोरिंग रोड, आरपीएस मोड़ के पास, पटना। पार्किंग उपलब्ध।"
       }},
     ],
     leadPrompt: {
@@ -312,32 +345,36 @@ const BUSINESSES = {
     name: "Royal City Guest House",
     short: "RC",
     city: "Patna",
-    greeting_en: "Namaste! 🏨 Royal City Guest House ka AI assistant (by Best Service).\nRoom availability, tariff, check-in/out, booking enquiry, directions — sab pooch sakte ho. Hindi / English / Hinglish OK.\nKaise help karun?",
+    greeting_en: "Namaste! 🏨 Royal City Guest House ka AI assistant (by Best Service).\nRoom availability, tariff, check-in/out, booking enquiry, directions, facilities — sab pooch sakte ho.\nHindi / English / Hinglish OK.\nKaise help karun?",
     chips: ["Room available?", "Tariff / rates", "Check-in time?", "Booking enquiry", "Directions?"],
     faqs: [
-      {k:["available","availability","vacancy","khali","room available","rooms","vacant","aaj","tonight","kal"], a:{
-        en:"Haan, rooms available hain ✅\n• Single / Double AC\n• Family room\nDates + guests batao — exact availability confirm karta hoon aur booking enquiry le leta hoon.",
-        hi:"हाँ, कमरे उपलब्ध हैं ✅ सिंगल/डबल एसी और फैमिली रूम। तारीख और मेहमान बताइए — बुकिंग enquiry ले लेता हूँ।"
+      {k:["available","availability","vacancy","khali","vacant","tonight","aaj raat","rooms free","room hai","room available","खाली","उपलब्ध","कमरा","कमेरे","रूम","आज","कल","रात"], a:{
+        en:"Haan ji, rooms available hain ✅\n• Single AC\n• Double AC\n• Family room\nCheck-in / check-out dates + kitne guests batao — exact availability confirm karke booking enquiry le leta hoon.",
+        hi:"हाँ जी, कमरे उपलब्ध हैं ✅\n• सिंगल एसी · डबल एसी · फैमिली रूम\nतारीख और मेहमान बताइए — बुकिंग enquiry ले लेता हूँ।"
       }},
-      {k:["price","rate","cost","kitna","tariff","charge","rent","paisa","rs","₹"], a:{
-        en:"Tariff (approx / night):\n• Single AC — ₹1,499\n• Double AC — ₹1,999\n• Family room — ₹2,799\nTaxes extra. Weekly stay pe discount mil sakta hai. Dates batao exact quote ke liye.",
-        hi:"टैरिफ़ (लगभग / रात):\n• सिंगल एसी — ₹1,499\n• डबल एसी — ₹1,999\n• फैमिली — ₹2,799\nटैक्स अलग। तारीख बताइए।"
+      {k:["price","rate","cost","kitna","tariff","charge","rent","paisa","rs","₹","किराया","दाम","कीमत","रेट","टैरिफ","कितना","रुपये","रुपए"], a:{
+        en:"Tariff (approx / night, taxes extra):\n• Single AC — ₹1,499\n• Double AC — ₹1,999\n• Family room — ₹2,799\nWeekly / long stay pe discount mil sakta hai. Dates batao exact quote ke liye.",
+        hi:"टैरिफ़ (लगभग / रात, टैक्स अलग):\n• सिंगल एसी — ₹1,499\n• डबल एसी — ₹1,999\n• फैमिली — ₹2,799\nलंबी स्टे पर छूट संभव। तारीख बताइए।"
       }},
-      {k:["checkin","check-in","checkout","check-out","timing","hours","time","kab","aana"], a:{
-        en:"Check-in: 12:00 PM · Check-out: 11:00 AM.\nEarly check-in / late check-out — availability pe depend (front desk confirm karegi).\nReception 24×7 open.",
-        hi:"चेक‑इन 12:00 PM · चेक‑आउट 11:00 AM। अर्ली/लेट — उपलब्धता पर। रिसेप्शन 24×7।"
+      {k:["checkin","check-in","checkout","check-out","check in","check out","चेकइन","चेक-इन","चेकआउट","चेक-आउट"], a:{
+        en:"Check-in: 12:00 PM · Check-out: 11:00 AM.\nEarly check-in / late check-out — availability pe depend (front desk confirm karegi).\nReception 24×7 open hai.",
+        hi:"चेक‑इन 12:00 PM · चेक‑आउट 11:00 AM।\nअर्ली/लेट — उपलब्धता पर। रिसेप्शन 24×7।"
       }},
-      {k:["book","booking","reserve","enquiry","inquiry","hold","confirm","karo","chahiye"], a:{
-        en:"Booking enquiry ke liye check-in/out dates, guests, room type + naam & phone do — request save karke front desk ko bhejta hoon.",
-        hi:"बुकिंग enquiry के लिए चेक‑इन/आउट, मेहमान, रूम टाइप + नाम व फ़ोन बताइए।"
+      {k:["book","booking","reserve","enquiry","inquiry","hold","confirm booking","reservation","बुकिंग","बुक","रिजर्व","आरक्षण"], a:{
+        en:"Booking enquiry ke liye ye details chahiye:\n1) Check-in & check-out dates\n2) Guests count\n3) Room type (Single / Double / Family)\n4) Naam + phone\nLikh do — request front desk ko bhejta hoon.",
+        hi:"बुकिंग enquiry के लिए चेक‑इन/आउट तारीख, मेहमान संख्या, रूम टाइप + नाम व फ़ोन बताइए।"
       }},
-      {k:["location","address","kahan","where","direction","directions","map","station","airport","kaise","pahuche","reach"], a:{
-        en:"Royal City Guest House — near main market / bus stand (sample Patna location).\n• Railway station se ~15–20 min auto/cab\n• Airport se ~25–30 min\nGoogle Maps pe \"Royal City Guest House\" search karo. Live location chahiye to booking ke baad share karenge.",
-        hi:"रॉयल सिटी गेस्ट हाउस — मेन मार्केट/बस स्टैंड के पास। स्टेशन से ~15–20 मिनट, एयरपोर्ट ~25–30 मिनट।"
+      {k:["location","address","kahan","where","direction","directions","map","station","airport","kaise pahuche","reach","पता","कहाँ","कहां","दिशा","मैप","स्टेशन","एयरपोर्ट","पहुचे"], a:{
+        en:"Royal City Guest House — near main market / bus stand (sample Patna location for this demo).\n• Railway station se ~15–20 min auto/cab\n• Airport se ~25–30 min\nGoogle Maps pe \"Royal City Guest House\" search karo. Live pin booking ke baad share hota hai.",
+        hi:"रॉयल सिटी गेस्ट हाउस — मेन मार्केट/बस स्टैंड के पास (डेमो लोकेशन)।\nस्टेशन से ~15–20 मिनट · एयरपोर्ट ~25–30 मिनट।"
       }},
-      {k:["wifi","ac","parking","food","breakfast","facilities","amenit","geyser","cctv","power"], a:{
-        en:"Facilities: AC, free Wi‑Fi, geyser, CCTV, power backup, parking, 24×7 reception. Breakfast on request (extra).",
-        hi:"सुविधाएँ: एसी, फ़्री वाई‑फ़ाई, गीज़र, CCTV, पावर बैकअप, पार्किंग, 24×7 रिसेप्शन। नाश्ता अनुरोध पर।"
+      {k:["wifi","wi-fi","ac","parking","food","breakfast","facilities","amenit","geyser","cctv","power","generator","वाइफाई","वाईफाई","पार्किंग","नाश्ता","सुविधा","जेनरेटर","गीजर"], a:{
+        en:"Facilities included / on-site:\n• AC rooms · free Wi‑Fi · geyser\n• CCTV · power backup · parking\n• 24×7 reception\nBreakfast on request (extra). Aur kuch specific poochna hai?",
+        hi:"सुविधाएँ: एसी, फ़्री वाई‑फ़ाई, गीज़र, CCTV, पावर बैकअप, पार्किंग, 24×7 रिसेप्शन। नाश्ता अनुरोध पर (अलग)।"
+      }},
+      {k:["timing","hours","open","kab khulta","reception time","समय","खुला"], a:{
+        en:"Reception 24×7 open. Check-in 12:00 PM, check-out 11:00 AM.",
+        hi:"रिसेप्शन 24×7 खुला है। चेक‑इन 12:00 PM, चेक‑आउट 11:00 AM।"
       }},
     ],
     leadPrompt: {
@@ -351,23 +388,22 @@ const BUSINESSES = {
 
 let biz = BUSINESSES.hotel;
 let history = [];
-let lead = { name: "", phone: "", need: "", step: null }; // null | name | phone | need
+let lead = { name: "", phone: "", need: "", step: null };
+let busy = false;
 
 const $messages = document.getElementById("messages");
 const $input = document.getElementById("input");
 const $form = document.getElementById("form");
 const $leadBox = document.getElementById("leadBox");
 const $chips = document.getElementById("chips");
+const $sendBtn = document.getElementById("sendBtn");
 
 function nowTime() {
-  const d = new Date();
-  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
 function detectLang(text) {
-  const t = text.toLowerCase();
   if (/[\u0900-\u097F]/.test(text)) return "hi";
-  // hinglish cues → reply hinglish/en blend (we use en templates which are hinglish)
   return "en";
 }
 
@@ -382,6 +418,20 @@ function addBubble(text, who) {
   $messages.appendChild(div);
   $messages.scrollTop = $messages.scrollHeight;
   history.push({ who, text });
+}
+
+function showTyping() {
+  const t = document.createElement("div");
+  t.className = "typing";
+  t.id = "typing";
+  t.innerHTML = "<span></span><span></span><span></span>";
+  $messages.appendChild(t);
+  $messages.scrollTop = $messages.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById("typing");
+  if (t) t.remove();
 }
 
 function renderChips() {
@@ -401,43 +451,80 @@ function updateLeadBox() {
     $leadBox.textContent = "No lead yet — chat to capture one.";
     return;
   }
-  $leadBox.textContent = `Business: ${biz.name}\nName: ${lead.name || "—"}\nPhone: ${lead.phone || "—"}\nNeed: ${lead.need || "—"}\nStatus: ${lead.step ? "collecting ("+lead.step+")" : (lead.need ? "captured" : "partial")}`;
+  $leadBox.textContent =
+    `Business: ${biz.name}\nName: ${lead.name || "—"}\nPhone: ${lead.phone || "—"}\nNeed: ${lead.need || "—"}\nStatus: ${lead.step ? "collecting ("+lead.step+")" : (lead.need ? "captured" : "partial")}`;
 }
 
 function looksLikePhone(s) {
   const d = s.replace(/\D/g, "");
-  return /^(?:\+?91)?[6-9]\d{9}$/.test(d) || /^\d{10}$/.test(d);
+  return /^(?:\+?91)?[6-9]\d{9}$/.test(d) || /^[6-9]\d{9}$/.test(d);
 }
 
 function normalizePhone(s) {
-  const d = s.replace(/\D/g, "");
-  return d.slice(-10);
+  return s.replace(/\D/g, "").slice(-10);
+}
+
+function norm(text) {
+  return text.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function keywordHit(hay, key) {
+  const k = key.toLowerCase();
+  if (/[\u0900-\u097F]/.test(key)) return hay.includes(k);
+  // word-ish match for latin tokens (avoid "rate" inside "generate")
+  if (k.length <= 3) {
+    const re = new RegExp("(?:^|[^a-z0-9])" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?:[^a-z0-9]|$)", "i");
+    return re.test(hay);
+  }
+  return hay.includes(k);
 }
 
 function matchFaq(text) {
-  const t = text.toLowerCase();
+  const t = norm(text);
+  let best = null;
+  let bestScore = 0;
   for (const f of biz.faqs) {
-    if (f.k.some(k => t.includes(k))) return f.a;
+    let score = 0;
+    for (const k of f.k) {
+      if (keywordHit(t, k)) score += Math.min(k.length, 12);
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = f.a;
+    }
   }
-  return null;
+  return bestScore > 0 ? best : null;
 }
 
 function wantsLead(text) {
-  const t = text.toLowerCase();
-  return /book|appoint|visit|call|contact|lead|enquiry|inquiry|register|callback|baat|milna|slot|reserve|booking|chahiye|karo|karna/.test(t);
+  const t = norm(text);
+  // stronger booking / contact intent — avoid bare "karo" / "chahiye"
+  return /(book(ing)?|appoint(ment)?|site visit|callback|call back|contact|enquiry|inquiry|reserve|reservation|register|slot book|lead|अपॉइंटमेंट|बुकिंग|बुक\b|रिजर्व|enquiry|inquiry)/i.test(t)
+    || /\b(book|reserve|callback)\b/.test(t)
+    || /(visit book|book karo|book karna|appointment chahiye|booking chahiye|enquiry chahiye)/i.test(t);
 }
 
 function tpl(s, vars) {
   return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] || "");
 }
 
+function fallback(lang) {
+  const examples = biz.chips.slice(0, 3).join(" · ");
+  if (lang === "hi") {
+    return `Samajh gaya 🙂 Main ${biz.name} ke FAQs aur lead capture me help karta hoon.\nAap pooch sakte ho: price, timing, location — ya booking/appointment likh kar lead chhod sakte ho.\nTry: ${examples}`;
+  }
+  return `Got it 🙂 Main ${biz.name} ke baare me FAQ + lead capture handle karta hoon.\nTry: price / timing / location — ya "booking" / "appointment" likho lead ke liye.\nQuick chips: ${examples}`;
+}
+
 function botReply(userText) {
   const lang = detectLang(userText);
   const text = userText.trim();
 
-  // Lead capture flow
   if (lead.step === "name") {
-    lead.name = text.replace(/^(i am|i'm|my name is|naam hai|main)\s+/i, "").trim();
+    lead.name = text.replace(/^(i am|i'm|my name is|naam hai|main|mera naam|मेरा नाम|मैं)\s+/i, "").trim();
+    if (lead.name.length < 2) {
+      return lang === "hi" ? "कृपया अपना सही नाम लिखें।" : "Please type your name (at least 2 characters).";
+    }
     lead.step = "phone";
     updateLeadBox();
     return tpl(biz.leadPrompt.phone, lead);
@@ -445,8 +532,8 @@ function botReply(userText) {
   if (lead.step === "phone") {
     if (!looksLikePhone(text)) {
       return lang === "hi"
-        ? "कृपया सही 10 अंकों का मोबाइल नंबर भेजें।"
-        : "Please send a valid 10-digit Indian mobile number.";
+        ? "कृपया सही 10 अंकों का भारतीय मोबाइल नंबर भेजें (जैसे 9876543210)।"
+        : "Please send a valid 10-digit Indian mobile number (e.g. 9876543210).";
     }
     lead.phone = normalizePhone(text);
     lead.step = "need";
@@ -460,7 +547,6 @@ function botReply(userText) {
     return tpl(biz.leadPrompt.done, lead);
   }
 
-  // Start lead if intent
   if (wantsLead(text) && !lead.need) {
     lead.step = "name";
     updateLeadBox();
@@ -472,32 +558,49 @@ function botReply(userText) {
   const faq = matchFaq(text);
   if (faq) return faq[lang] || faq.en;
 
-  // Greeting / help
-  if (/^(hi|hello|hey|namaste|namaskar|hii|helo)\b/i.test(text) || /help|madad|menu/.test(text.toLowerCase())) {
+  if (/^(hi|hello|hey|namaste|namaskar|hii|helo|hola|yo|नमस्ते|नमस्कार)\b/i.test(text) || /\b(help|madad|menu|start)\b/i.test(text)) {
     return biz.greeting_en;
   }
 
-  // Fallback — nudge to FAQ or lead
-  return lang === "hi"
-    ? `Samajh gaya. Main ${biz.name} ke FAQs aur lead capture me help karta hoon.\nAap pooch sakte ho: price, timing, location, ya "book" likh kar lead chhod sakte ho.`
-    : `Got it. Main ${biz.name} ke baare me FAQ + lead capture handle karta hoon.\nTry: price / timing / location — ya "book" likho lead ke liye.`;
+  // soft thank-you
+  if (/\b(thanks|thank you|thx|ok|okay|achha|acha|ठीक|धन्यवाद|शुक्रिया)\b/i.test(text)) {
+    return lang === "hi"
+      ? "स्वागत है! और कुछ पूछना हो तो लिखिए — room, price, timing, location या booking."
+      : "Welcome! Aur kuch poochna ho to likho — room / price / timing / location / booking.";
+  }
+
+  return fallback(lang);
 }
 
 function send() {
   const text = $input.value.trim();
-  if (!text) return;
+  if (!text || busy) return;
   $input.value = "";
   addBubble(text, "user");
-  setTimeout(() => addBubble(botReply(text), "bot"), 350 + Math.random() * 350);
+  busy = true;
+  $sendBtn.disabled = true;
+  showTyping();
+  const delay = 420 + Math.random() * 480;
+  setTimeout(() => {
+    hideTyping();
+    addBubble(botReply(text), "bot");
+    busy = false;
+    $sendBtn.disabled = false;
+    $input.focus();
+  }, delay);
 }
 
 function switchBiz(key) {
   biz = BUSINESSES[key];
   lead = { name: "", phone: "", need: "", step: null };
   history = [];
+  busy = false;
+  $sendBtn.disabled = false;
+  hideTyping();
   $messages.innerHTML = "";
   document.getElementById("headerTitle").textContent = biz.name;
   document.getElementById("avatar").textContent = biz.short;
+  document.getElementById("headerStatus").textContent = "online · AI assistant by Best Service";
   document.querySelectorAll(".biz").forEach(el => {
     el.classList.toggle("active", el.dataset.biz === key);
   });
